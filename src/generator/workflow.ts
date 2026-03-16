@@ -36,7 +36,6 @@ function buildActionStep(
   options: {
     claude_args?: string;
     plugins?: string;
-    track_progress?: boolean;
   }
 ): Record<string, unknown> {
   const fullPrompt = defaultPrompt
@@ -55,10 +54,6 @@ function buildActionStep(
   if (options.plugins) {
     withBlock.plugins = options.plugins;
   }
-  if (options.track_progress !== undefined) {
-    withBlock.track_progress = options.track_progress;
-  }
-
   return {
     name: "Run Claude Code Action",
     uses: "anthropics/claude-code-action@v1",
@@ -97,7 +92,6 @@ export function generateWorkflow(
     buildActionStep(spec.spec.action.prompt, defaultPrompt, {
       claude_args: spec.spec.action.claude_args,
       plugins: spec.spec.action.plugins,
-      track_progress: spec.spec.action.track_progress,
     })
   );
 

@@ -48,7 +48,6 @@ action:
   prompt: "Check this PR for linting and style issues."
   claude_args: "--timeout 300"
   plugins: "my-plugin"
-  track_progress: true
 
 # steps that run after claude-code-action
 post_action_steps:
@@ -77,7 +76,6 @@ You are a code review assistant. Follow these guidelines:
 | `action.prompt` | string | yes | The prompt sent to Claude |
 | `action.claude_args` | string | no | Extra CLI args for Claude |
 | `action.plugins` | string | no | Plugins to enable |
-| `action.track_progress` | boolean | no | Enable progress tracking |
 | `checkout` | object | no | Args passed to `actions/checkout@v4` |
 | `pre_action_steps` | array | no | GHA steps to run before the action |
 | `post_action_steps` | array | no | GHA steps to run after the action |

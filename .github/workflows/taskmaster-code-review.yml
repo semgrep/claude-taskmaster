@@ -29,4 +29,3 @@ jobs:
             - Zod schema design (strict vs passthrough)
             - Generated YAML validity for GitHub Actions
             - Edge cases in task name sanitization
-          track_progress: true

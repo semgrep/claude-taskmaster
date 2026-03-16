@@ -110,7 +110,6 @@ describe("generateWorkflow", () => {
           prompt: "Test",
           claude_args: "--timeout 600",
           plugins: "my-plugin",
-          track_progress: true,
         },
       },
     };
@@ -121,6 +120,5 @@ describe("generateWorkflow", () => {
     );
     expect(actionStep.with.claude_args).toBe("--timeout 600");
     expect(actionStep.with.plugins).toBe("my-plugin");
-    expect(actionStep.with.track_progress).toBe(true);
   });
 });

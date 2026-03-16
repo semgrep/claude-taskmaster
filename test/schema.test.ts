@@ -5,15 +5,12 @@ describe("ActionSchema", () => {
   test("accepts valid action", () => {
     const result = ActionSchema.safeParse({
       prompt: "Review this code",
-      track_progress: true,
     });
     expect(result.success).toBe(true);
   });
 
   test("requires prompt", () => {
-    const result = ActionSchema.safeParse({
-      track_progress: true,
-    });
+    const result = ActionSchema.safeParse({});
     expect(result.success).toBe(false);
   });
 
@@ -37,7 +34,6 @@ describe("ActionSchema", () => {
       prompt: "hello",
       claude_args: "--timeout 300",
       plugins: "some-plugin",
-      track_progress: false,
     });
     expect(result.success).toBe(true);
   });

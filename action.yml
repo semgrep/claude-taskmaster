@@ -9,6 +9,10 @@ inputs:
     description: "Directory to write generated workflow files"
     required: false
     default: ".github/workflows"
+  action_version:
+    description: "Version of anthropics/claude-code-action to use in generated workflows"
+    required: false
+    default: "v1"
 outputs:
   changed:
     description: "Whether generated workflows changed"
@@ -29,13 +33,15 @@ runs:
 
     - name: Run Taskmaster CLI
       shell: bash
+      env:
+        TASKMASTER_ACTION_VERSION: ${{ inputs.action_version }}
       run: bun run ${{ github.action_path }}/src/cli.ts ${{ inputs.input_dir }} ${{ inputs.output_dir }}
 
     - name: Check for changes
       id: changes
       shell: bash
       run: |
-        if git diff --quiet -- ${{ inputs.output_dir }}; then
+        if git diff --quiet -- "${{ inputs.output_dir }}"/taskmaster-*.yml; then
           echo "changed=false" >> "$GITHUB_OUTPUT"
         else
           BRANCH="taskmaster/update-workflows-$(git rev-parse --short HEAD)-$(date +%s)"
@@ -44,14 +50,16 @@ runs:
         fi
 
     - name: Commit and push changes
+      id: commit
       if: steps.changes.outputs.changed == 'true'
       shell: bash
       run: |
         git checkout -b "${{ steps.changes.outputs.branch }}"
-        git add "${{ inputs.output_dir }}"
+        git add "${{ inputs.output_dir }}"/taskmaster-*.yml
         git config user.name "claude-taskmaster[bot]"
         git config user.email "claude-taskmaster[bot]@users.noreply.github.com"
         git commit -m "chore: update taskmaster-generated workflows"
+        echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
         git push origin "${{ steps.changes.outputs.branch }}"
 
     - name: Comment on PR
@@ -61,16 +69,20 @@ runs:
         GH_TOKEN: ${{ github.token }}
         BRANCH: ${{ steps.changes.outputs.branch }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
+        COMMIT_SHA: ${{ steps.commit.outputs.sha }}
+        REPO: ${{ github.repository }}
       run: |
         gh pr comment "$PR_NUMBER" --body "$(cat <<EOF
         ## Claude Taskmaster
 
-        Generated workflows have been updated on branch \`$BRANCH\`.
+        Generated workflows have been updated on branch \`$BRANCH\` ([view commit](https://github.com/$REPO/commit/$COMMIT_SHA)).
 
         To apply these changes, cherry-pick the commit:
         \`\`\`bash
         git fetch origin
-        git cherry-pick origin/$BRANCH
+        git cherry-pick $COMMIT_SHA
         \`\`\`
+
+        > **Note:** If this action is run by a bot or GitHub App, pushing to \`.github/workflows/\` requires a token with the \`workflows\` permission. The default \`GITHUB_TOKEN\` cannot modify workflow files. Use a [GitHub App installation token](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/about-authentication-with-a-github-app) with \`workflows: write\` or a [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with the \`workflow\` scope instead.
         EOF
         )"

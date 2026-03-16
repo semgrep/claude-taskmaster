@@ -17,6 +17,7 @@ async function main() {
   }
 
   const [inputDir, outputDir] = args;
+  const actionVersion = process.env.TASKMASTER_ACTION_VERSION || "v1";
 
   // Read
   console.log(`Reading specs from ${inputDir}...`);
@@ -44,7 +45,7 @@ async function main() {
   const written: string[] = [];
 
   for (const spec of valid) {
-    const workflow = generateWorkflow(spec, defaultPrompt);
+    const workflow = generateWorkflow(spec, defaultPrompt, actionVersion);
     const path = await writeWorkflowFile(
       outputDir,
       workflow.filename,

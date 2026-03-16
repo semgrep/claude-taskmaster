@@ -36,6 +36,7 @@ function buildActionStep(
   options: {
     claude_args?: string;
     plugins?: string;
+    actionVersion: string;
   }
 ): Record<string, unknown> {
   const fullPrompt = defaultPrompt
@@ -56,7 +57,7 @@ function buildActionStep(
   }
   return {
     name: "Run Claude Code Action",
-    uses: "anthropics/claude-code-action@v1",
+    uses: `anthropics/claude-code-action@${options.actionVersion}`,
     with: withBlock,
   };
 }
@@ -66,7 +67,8 @@ function buildActionStep(
  */
 export function generateWorkflow(
   spec: ValidatedSpec,
-  defaultPrompt: string | null
+  defaultPrompt: string | null,
+  actionVersion: string = "v1"
 ): GeneratedWorkflow {
   const steps: Record<string, unknown>[] = [];
 
@@ -92,6 +94,7 @@ export function generateWorkflow(
     buildActionStep(spec.spec.action.prompt, defaultPrompt, {
       claude_args: spec.spec.action.claude_args,
       plugins: spec.spec.action.plugins,
+      actionVersion,
     })
   );
 

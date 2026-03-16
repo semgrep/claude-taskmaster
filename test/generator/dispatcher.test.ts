@@ -7,7 +7,7 @@ describe("generateDispatcher", () => {
     {
       filename: "code-review.yml",
       taskName: "code-review",
-      spec: { name: "code-review", action: { prompt: "Review" } },
+      spec: { name: "code-review", description: "Review code changes", action: { prompt: "Review" } },
     },
     {
       filename: "lint-check.yml",
@@ -69,5 +69,13 @@ describe("generateDispatcher", () => {
     for (const job of Object.values(jobs)) {
       expect(job.secrets).toBe("inherit");
     }
+  });
+
+  test("job name uses description when available, falls back to taskName", () => {
+    const result = generateDispatcher(specs);
+    const jobs = result.content.jobs as Record<string, any>;
+
+    expect(jobs["code-review"].name).toBe("Review code changes");
+    expect(jobs["lint-check"].name).toBe("lint-check");
   });
 });

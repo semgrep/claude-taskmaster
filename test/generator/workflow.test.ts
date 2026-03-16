@@ -55,13 +55,31 @@ describe("generateWorkflow", () => {
     expect(actionStep.with.prompt).toBe("Review this code");
   });
 
-  test("prepends default prompt", () => {
+  test("passes system prompt via --append-system-prompt", () => {
     const result = generateWorkflow(minimalSpec, "Be helpful.");
     const jobs = result.content.jobs as any;
     const actionStep = jobs.task.steps.find(
       (s: any) => s.uses === "anthropics/claude-code-action@v1"
     );
-    expect(actionStep.with.prompt).toBe("Be helpful.\n\nReview this code");
+    expect(actionStep.with.prompt).toBe("Review this code");
+    expect(actionStep.with.claude_args).toBe("--append-system-prompt 'Be helpful.'");
+  });
+
+  test("appends system prompt to existing claude_args", () => {
+    const spec: ValidatedSpec = {
+      filename: "test.yml",
+      taskName: "test",
+      spec: {
+        name: "test",
+        action: { prompt: "Test", claude_args: "--timeout 600" },
+      },
+    };
+    const result = generateWorkflow(spec, "Be helpful.");
+    const jobs = result.content.jobs as any;
+    const actionStep = jobs.task.steps.find(
+      (s: any) => s.uses === "anthropics/claude-code-action@v1"
+    );
+    expect(actionStep.with.claude_args).toBe("--timeout 600 --append-system-prompt 'Be helpful.'");
   });
 
   test("includes pre and post action steps", () => {

@@ -6,20 +6,20 @@ const VALID_DIR = join(import.meta.dir, "fixtures/valid");
 const INVALID_DIR = join(import.meta.dir, "fixtures/invalid");
 
 describe("readInputDir", () => {
-  test("reads YAML files and DEFAULT.md from valid dir", async () => {
+  test("reads YAML files and SYSTEM_PROMPT.md from valid dir", async () => {
     const result = await readInputDir(VALID_DIR);
 
-    expect(result.defaultPrompt).toBeTruthy();
-    expect(result.defaultPrompt).toContain("helpful code review assistant");
+    expect(result.systemPrompt).toBeTruthy();
+    expect(result.systemPrompt).toContain("helpful code review assistant");
     expect(result.specs.length).toBe(2);
 
     const names = result.specs.map((s) => s.taskName).sort();
     expect(names).toEqual(["code-review", "lint-check"]);
   });
 
-  test("returns null defaultPrompt when no DEFAULT.md", async () => {
+  test("returns null systemPrompt when no SYSTEM_PROMPT.md", async () => {
     const result = await readInputDir(INVALID_DIR);
-    expect(result.defaultPrompt).toBeNull();
+    expect(result.systemPrompt).toBeNull();
   });
 
   test("parses YAML content into data", async () => {

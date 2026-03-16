@@ -1,0 +1,41 @@
+name: Taskmaster Dogfood
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - '.github/taskmaster/**'
+      - 'src/**'
+      - 'action.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - '.github/taskmaster/**'
+      - 'src/**'
+      - 'action.yml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dogfood:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Taskmaster (self)
+        id: taskmaster
+        uses: ./
+        with:
+          input_dir: .github/taskmaster
+          output_dir: .github/workflows
+
+      - name: Summary
+        shell: bash
+        run: |
+          if [ "${{ steps.taskmaster.outputs.changed }}" = "true" ]; then
+            echo "::warning::Generated workflows are out of date! Changes pushed to branch: ${{ steps.taskmaster.outputs.branch }}"
+          else
+            echo "Generated workflows are up to date."
+          fi

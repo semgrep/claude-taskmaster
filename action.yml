@@ -1,0 +1,76 @@
+name: "Claude Taskmaster"
+description: "Generate GitHub Actions workflows from Claude task specs"
+inputs:
+  input_dir:
+    description: "Directory containing taskmaster YAML specs"
+    required: false
+    default: ".github/taskmaster"
+  output_dir:
+    description: "Directory to write generated workflow files"
+    required: false
+    default: ".github/workflows"
+outputs:
+  changed:
+    description: "Whether generated workflows changed"
+    value: ${{ steps.changes.outputs.changed }}
+  branch:
+    description: "Branch name if changes were pushed"
+    value: ${{ steps.changes.outputs.branch }}
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: bun install --frozen-lockfile
+
+    - name: Run Taskmaster CLI
+      shell: bash
+      run: bun run ${{ github.action_path }}/src/cli.ts ${{ inputs.input_dir }} ${{ inputs.output_dir }}
+
+    - name: Check for changes
+      id: changes
+      shell: bash
+      run: |
+        if git diff --quiet -- ${{ inputs.output_dir }}; then
+          echo "changed=false" >> "$GITHUB_OUTPUT"
+        else
+          BRANCH="taskmaster/update-workflows-$(git rev-parse --short HEAD)-$(date +%s)"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Commit and push changes
+      if: steps.changes.outputs.changed == 'true'
+      shell: bash
+      run: |
+        git checkout -b "${{ steps.changes.outputs.branch }}"
+        git add "${{ inputs.output_dir }}"
+        git config user.name "claude-taskmaster[bot]"
+        git config user.email "claude-taskmaster[bot]@users.noreply.github.com"
+        git commit -m "chore: update taskmaster-generated workflows"
+        git push origin "${{ steps.changes.outputs.branch }}"
+
+    - name: Comment on PR
+      if: steps.changes.outputs.changed == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        BRANCH: ${{ steps.changes.outputs.branch }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        gh pr comment "$PR_NUMBER" --body "$(cat <<EOF
+        ## Claude Taskmaster
+
+        Generated workflows have been updated on branch \`$BRANCH\`.
+
+        To apply these changes, cherry-pick the commit:
+        \`\`\`bash
+        git fetch origin
+        git cherry-pick origin/$BRANCH
+        \`\`\`
+        EOF
+        )"

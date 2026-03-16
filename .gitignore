@@ -1,0 +1,22 @@
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Bun
+bun.lockb
+
+# Test output
+test/output/

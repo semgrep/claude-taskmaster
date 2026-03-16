@@ -1,0 +1,10 @@
+name: code-review
+description: "Review pull request code changes for the taskmaster project"
+action:
+  prompt: |
+    Review the code changes in this PR. Focus on:
+    - TypeScript type safety and correctness
+    - Zod schema design (strict vs passthrough)
+    - Generated YAML validity for GitHub Actions
+    - Edge cases in task name sanitization
+  track_progress: true

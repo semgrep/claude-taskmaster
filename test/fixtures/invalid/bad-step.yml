@@ -1,0 +1,13 @@
+name: bad-steps
+action:
+  prompt: "Do something"
+pre_action_steps:
+  - name: Has neither uses nor run
+    env:
+      FOO: bar
+  - name: Has both uses and run
+    uses: actions/checkout@v4
+    run: echo conflicting
+  - name: Shell without run
+    uses: actions/checkout@v4
+    shell: bash

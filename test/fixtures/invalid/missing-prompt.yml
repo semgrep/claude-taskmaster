@@ -1,0 +1,3 @@
+name: bad-task
+action:
+  track_progress: true

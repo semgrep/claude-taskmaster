@@ -1,0 +1,17 @@
+name: lint-check
+description: "Check for linting issues"
+action:
+  prompt: "Check this PR for linting and style issues."
+  claude_args: "--timeout 300"
+checkout:
+  fetch-depth: 0
+pre_action_steps:
+  - name: Setup Node
+    uses: actions/setup-node@v4
+    with:
+      node-version: "20"
+  - name: Install deps
+    run: npm ci
+post_action_steps:
+  - name: Report
+    run: echo "Lint check complete"

@@ -1,0 +1,17 @@
+{
+  "name": "claude-taskmaster",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "bun run src/cli.ts",
+    "build:compile": "bun build src/cli.ts --compile --outfile dist/claude-taskmaster",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "yaml": "^2.7.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0"
+  }
+}

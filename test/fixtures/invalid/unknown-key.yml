@@ -1,0 +1,4 @@
+name: bad-task-2
+action:
+  prompt: "Do something"
+  unknown_field: true

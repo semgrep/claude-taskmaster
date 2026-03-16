@@ -1,0 +1,5 @@
+name: code-review
+description: "Review pull request code changes"
+action:
+  prompt: "Review the code changes in this PR. Focus on bugs, security issues, and code quality."
+  track_progress: true

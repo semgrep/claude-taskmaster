@@ -55,12 +55,12 @@ post_action_steps:
     run: echo "Lint check complete"
 ```
 
-### DEFAULT.md
+### SYSTEM_PROMPT.md
 
-Place a `DEFAULT.md` file in the same directory as your specs. Its content is prepended to every task's prompt — useful for shared instructions.
+Place a `SYSTEM_PROMPT.md` file in the same directory as your specs. Its content is passed to every task via `--append-system-prompt` — useful for shared instructions that should be part of the system prompt.
 
 ```markdown
-<!-- .github/taskmaster/DEFAULT.md -->
+<!-- .github/taskmaster/SYSTEM_PROMPT.md -->
 You are a code review assistant. Follow these guidelines:
 - Be constructive and specific
 - Focus on correctness, security, and maintainability
@@ -71,7 +71,7 @@ You are a code review assistant. Follow these guidelines:
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `name` | string | yes | Task name (used for labels, workflow names, job IDs) |
-| `description` | string | no | Human-readable description |
+| `description` | string | no | Human-readable description (used as the job name in the dispatcher) |
 | `action` | object | yes | Claude code action configuration |
 | `action.prompt` | string | yes | The prompt sent to Claude |
 | `action.claude_args` | string | no | Extra CLI args for Claude |
@@ -90,6 +90,9 @@ bun run src/cli.ts <input-dir> <output-dir>
 
 # Example
 bun run src/cli.ts .github/taskmaster .github/workflows
+
+# Pin claude-code-action version (default: v1)
+TASKMASTER_ACTION_VERSION=v2 bun run src/cli.ts .github/taskmaster .github/workflows
 ```
 
 This generates:
@@ -115,9 +118,23 @@ jobs:
         with:
           input_dir: .github/taskmaster    # default
           output_dir: .github/workflows    # default
+          action_version: v1               # default
 ```
 
+| Input | Required | Default | Description |
+|---|---|---|---|
+| `input_dir` | no | `.github/taskmaster` | Directory containing taskmaster YAML specs |
+| `output_dir` | no | `.github/workflows` | Directory to write generated workflow files |
+| `action_version` | no | `v1` | Version of `anthropics/claude-code-action` to use in generated workflows |
+
+| Output | Description |
+|---|---|
+| `changed` | Whether generated workflows changed (`true`/`false`) |
+| `branch` | Branch name if changes were pushed |
+
 The action runs the CLI, and if workflows changed, creates a branch with the updates and comments on the PR with cherry-pick instructions.
+
+> **Note:** If this action is run by a bot or GitHub App, pushing to `.github/workflows/` requires a token with the `workflows` permission. The default `GITHUB_TOKEN` cannot modify workflow files. Use a [GitHub App installation token](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/about-authentication-with-a-github-app) with `workflows: write` or a [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with the `workflow` scope instead.
 
 ## Development
 
@@ -143,7 +160,7 @@ bun run src/cli.ts .github/taskmaster .github/workflows
 src/
 ├── cli.ts              # CLI entrypoint: read → validate → generate → write
 ├── schema.ts           # Zod schemas matching GHA SchemaStore spec
-├── reader.ts           # Reads YAML specs + DEFAULT.md from input dir
+├── reader.ts           # Reads YAML specs + SYSTEM_PROMPT.md from input dir
 ├── validator.ts        # Validates specs, collects & formats errors
 └── generator/
     ├── index.ts        # Re-exports

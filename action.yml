@@ -83,6 +83,5 @@ runs:
         git cherry-pick $COMMIT_SHA
         \`\`\`
 
-        > **Note:** If this action is run by a bot or GitHub App, pushing to \`.github/workflows/\` requires a token with the \`workflows\` permission. The default \`GITHUB_TOKEN\` cannot modify workflow files. Use a [GitHub App installation token](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/about-authentication-with-a-github-app) with \`workflows: write\` or a [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with the \`workflow\` scope instead.
         EOF
         )"

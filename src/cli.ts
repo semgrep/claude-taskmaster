@@ -21,7 +21,7 @@ async function main() {
 
   // Read
   console.log(`Reading specs from ${inputDir}...`);
-  const { specs, defaultPrompt } = await readInputDir(inputDir);
+  const { specs, systemPrompt } = await readInputDir(inputDir);
 
   if (specs.length === 0) {
     console.error(`No YAML spec files found in ${inputDir}`);
@@ -45,7 +45,7 @@ async function main() {
   const written: string[] = [];
 
   for (const spec of valid) {
-    const workflow = generateWorkflow(spec, defaultPrompt, actionVersion);
+    const workflow = generateWorkflow(spec, systemPrompt, actionVersion);
     const path = await writeWorkflowFile(
       outputDir,
       workflow.filename,

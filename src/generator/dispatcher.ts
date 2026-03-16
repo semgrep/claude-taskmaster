@@ -17,7 +17,9 @@ export function generateDispatcher(
 
   for (const spec of specs) {
     const jobId = sanitizeJobId(spec.taskName);
+    const name = spec.spec.description || spec.taskName;
     jobs[jobId] = {
+      name,
       if: `contains(github.event.pull_request.labels.*.name, '${spec.taskName}')`,
       uses: `./.github/workflows/taskmaster-${spec.taskName}.yml`,
       secrets: "inherit",

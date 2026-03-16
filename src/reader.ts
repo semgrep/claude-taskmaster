@@ -10,7 +10,7 @@ export interface RawSpec {
 
 export interface ReadResult {
   specs: RawSpec[];
-  defaultPrompt: string | null;
+  systemPrompt: string | null;
 }
 
 /**
@@ -22,19 +22,19 @@ function taskNameFromFilename(filename: string): string {
 }
 
 /**
- * Reads all YAML spec files and an optional DEFAULT.md from the input directory.
+ * Reads all YAML spec files and an optional SYSTEM_PROMPT.md from the input directory.
  */
 export async function readInputDir(inputDir: string): Promise<ReadResult> {
   const entries = await readdir(inputDir);
 
-  let defaultPrompt: string | null = null;
+  let systemPrompt: string | null = null;
   const specs: RawSpec[] = [];
 
   for (const entry of entries) {
     const fullPath = join(inputDir, entry);
 
-    if (entry === "DEFAULT.md") {
-      defaultPrompt = await Bun.file(fullPath).text();
+    if (entry === "SYSTEM_PROMPT.md") {
+      systemPrompt = await Bun.file(fullPath).text();
       continue;
     }
 
@@ -49,5 +49,5 @@ export async function readInputDir(inputDir: string): Promise<ReadResult> {
     }
   }
 
-  return { specs, defaultPrompt };
+  return { specs, systemPrompt };
 }

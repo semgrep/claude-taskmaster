@@ -50,12 +50,13 @@ describe("CLI integration", () => {
     expect(parsed.on).toEqual({ workflow_call: {} });
     expect(parsed.jobs.task["runs-on"]).toBe("ubuntu-latest");
 
-    // Prompt should include default prompt
+    // System prompt should be passed via --append-system-prompt in claude_args
     const actionStep = parsed.jobs.task.steps.find(
       (s: any) => s.uses === "anthropics/claude-code-action@v1"
     );
-    expect(actionStep.with.prompt).toContain("helpful code review assistant");
-    expect(actionStep.with.prompt).toContain("Review the code changes");
+    expect(actionStep.with.prompt).toBe("Review the code changes in this PR. Focus on bugs, security issues, and code quality.");
+    expect(actionStep.with.claude_args).toContain("--append-system-prompt");
+    expect(actionStep.with.claude_args).toContain("helpful code review assistant");
   });
 
   test("generated dispatcher is valid", async () => {

@@ -32,25 +32,29 @@ function stepToYaml(step: GhaStep): Record<string, unknown> {
  */
 function buildActionStep(
   prompt: string,
-  defaultPrompt: string | null,
+  systemPrompt: string | null,
   options: {
     claude_args?: string;
     plugins?: string;
     actionVersion: string;
   }
 ): Record<string, unknown> {
-  const fullPrompt = defaultPrompt
-    ? `${defaultPrompt}\n\n${prompt}`
-    : prompt;
-
   const withBlock: Record<string, unknown> = {
     anthropic_api_key: "${{ secrets.ANTHROPIC_API_KEY }}",
     use_sticky_comment: true,
-    prompt: fullPrompt,
+    prompt,
   };
 
-  if (options.claude_args) {
-    withBlock.claude_args = options.claude_args;
+  let claudeArgs = options.claude_args || "";
+
+  if (systemPrompt) {
+    const escaped = systemPrompt.replace(/'/g, "'\\''");
+    const appendArg = `--append-system-prompt '${escaped}'`;
+    claudeArgs = claudeArgs ? `${claudeArgs} ${appendArg}` : appendArg;
+  }
+
+  if (claudeArgs) {
+    withBlock.claude_args = claudeArgs;
   }
   if (options.plugins) {
     withBlock.plugins = options.plugins;
@@ -67,7 +71,7 @@ function buildActionStep(
  */
 export function generateWorkflow(
   spec: ValidatedSpec,
-  defaultPrompt: string | null,
+  systemPrompt: string | null,
   actionVersion: string = "v1"
 ): GeneratedWorkflow {
   const steps: Record<string, unknown>[] = [];
@@ -91,7 +95,7 @@ export function generateWorkflow(
 
   // Claude code action step
   steps.push(
-    buildActionStep(spec.spec.action.prompt, defaultPrompt, {
+    buildActionStep(spec.spec.action.prompt, systemPrompt, {
       claude_args: spec.spec.action.claude_args,
       plugins: spec.spec.action.plugins,
       actionVersion,

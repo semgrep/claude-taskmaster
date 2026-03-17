@@ -46,8 +46,12 @@ pre_action_steps:
 # the claude-code-action configuration
 action:
   prompt: "Check this PR for linting and style issues."
-  claude_args: "--timeout 300"
   plugins: "my-plugin"
+  # additional tools beyond the defaults (see below)
+  allowed_tools:
+    - Edit
+    - Write
+    - "Bash(npm test*)"
 
 # steps that run after claude-code-action
 post_action_steps:
@@ -74,13 +78,31 @@ You are a code review assistant. Follow these guidelines:
 | `description` | string | no | Human-readable description (used as the job name in the dispatcher) |
 | `action` | object | yes | Claude code action configuration |
 | `action.prompt` | string | yes | The prompt sent to Claude |
-| `action.claude_args` | string | no | Extra CLI args for Claude |
 | `action.plugins` | string | no | Plugins to enable |
+| `action.allowed_tools` | string[] | no | Additional tools to allow beyond the defaults (see below) |
 | `checkout` | object | no | Args passed to `actions/checkout@v4` |
 | `pre_action_steps` | array | no | GHA steps to run before the action |
 | `post_action_steps` | array | no | GHA steps to run after the action |
 
 Pre/post action steps are validated against the [GitHub Actions step schema](https://json.schemastore.org/github-workflow.json) — each step must have exactly one of `uses` or `run`, and `shell`/`working-directory` are only valid with `run`.
+
+### Default Allowed Tools
+
+Every generated workflow automatically allows a set of safe, non-mutating tools via `--allowedTools`. These are passed as CLI args to Claude and do not need to be specified in your spec:
+
+| Category | Tools |
+|---|---|
+| File reading / search | `Read`, `Grep`, `Glob` |
+| Subagents & task management | `Agent`, `Skill`, `TaskCreate`, `TaskGet`, `TaskList`, `TaskOutput`, `TaskStop`, `TaskUpdate`, `TodoWrite` |
+| Worktree management | `EnterWorktree`, `ExitWorktree` |
+| Scheduling | `CronCreate`, `CronDelete`, `CronList` |
+| Tool discovery | `ToolSearch` |
+| Code intelligence | `LSP` |
+| MCP resources | `ListMcpResourcesTool`, `ReadMcpResourceTool` |
+| Plan mode | `EnterPlanMode`, `ExitPlanMode` |
+| Scoped Bash | `Bash(git diff*)`, `Bash(git log*)`, `Bash(git show*)`, `Bash(gh pr *)` |
+
+To allow additional tools (e.g. mutation tools like `Edit`, `Write`, or scoped `Bash` patterns), use `action.allowed_tools` in your spec. Duplicates with the defaults are automatically removed.
 
 ## CLI Usage
 
@@ -175,3 +197,4 @@ src/
 - **Strict schemas**: The root spec and `action` block use strict Zod schemas (reject unknown keys) to catch typos. Pre/post steps are validated against the GHA step spec from SchemaStore.
 - **`secrets: inherit`**: Reusable workflows get secrets from the dispatcher, keeping configuration simple.
 - **Hardcoded permissions**: Reusable workflows set `contents: write`, `pull-requests: write`, `issues: write`, `id-token: write` — what claude-code-action needs.
+- **Default allowed tools**: Every workflow gets a safe baseline set of non-mutating tools. Users can extend this via `action.allowed_tools` without needing to re-specify the defaults.

@@ -29,6 +29,7 @@ export const ActionSchema = z
     prompt: z.string().min(1, "Action prompt cannot be empty"),
     claude_args: z.string().optional(),
     plugins: z.string().optional(),
+    allowed_tools: z.array(z.string()).optional(),
   })
   .strict();
 

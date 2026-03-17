@@ -44,7 +44,7 @@ describe("generateWorkflow", () => {
     expect(steps[0].uses).toBe("actions/checkout@v4");
   });
 
-  test("includes claude-code-action step", () => {
+  test("includes claude-code-action step with required fields", () => {
     const result = generateWorkflow(minimalSpec, null);
     const jobs = result.content.jobs as any;
     const steps = jobs.task.steps;
@@ -53,6 +53,77 @@ describe("generateWorkflow", () => {
     );
     expect(actionStep).toBeTruthy();
     expect(actionStep.with.prompt).toBe("Review this code");
+    expect(actionStep.with.github_token).toBe("${{ secrets.GITHUB_TOKEN }}");
+    expect(actionStep.with.track_progress).toBe(true);
+    // default allowed tools passed via claude_args
+    const args: string = actionStep.with.claude_args;
+    for (const tool of [
+      "Read", "Grep", "Glob", "Agent", "Skill",
+      "TaskCreate", "TaskGet", "TaskList", "TaskOutput", "TaskStop", "TaskUpdate",
+      "TodoWrite", "EnterWorktree", "ExitWorktree",
+      "CronCreate", "CronDelete", "CronList",
+      "ToolSearch", "LSP", "ListMcpResourcesTool", "ReadMcpResourceTool",
+      "EnterPlanMode", "ExitPlanMode",
+    ]) {
+      expect(args).toContain(`--allowedTools '${tool}'`);
+    }
+    expect(args).toContain("--allowedTools 'Bash(git diff*)'");
+    expect(args).toContain("--allowedTools 'Bash(git log*)'");
+    expect(args).toContain("--allowedTools 'Bash(git show*)'");
+    expect(args).toContain("--allowedTools 'Bash(gh pr *)'");
+  });
+
+  test("merges user-specified allowed_tools with defaults", () => {
+    const spec: ValidatedSpec = {
+      filename: "test.yml",
+      taskName: "test",
+      spec: {
+        name: "test",
+        action: {
+          prompt: "Test",
+          allowed_tools: ["Edit", "Write", "Bash(npm test*)"],
+        },
+      },
+    };
+    const result = generateWorkflow(spec, null);
+    const jobs = result.content.jobs as any;
+    const actionStep = jobs.task.steps.find(
+      (s: any) => s.uses === "anthropics/claude-code-action@v1"
+    );
+    const args: string = actionStep.with.claude_args;
+    // defaults still present
+    expect(args).toContain("--allowedTools 'Read'");
+    expect(args).toContain("--allowedTools 'Agent'");
+    // user tools appended
+    expect(args).toContain("--allowedTools 'Edit'");
+    expect(args).toContain("--allowedTools 'Write'");
+    expect(args).toContain("--allowedTools 'Bash(npm test*)'");
+  });
+
+  test("deduplicates user-specified tools that overlap with defaults", () => {
+    const spec: ValidatedSpec = {
+      filename: "test.yml",
+      taskName: "test",
+      spec: {
+        name: "test",
+        action: {
+          prompt: "Test",
+          allowed_tools: ["Read", "Grep", "Edit"],
+        },
+      },
+    };
+    const result = generateWorkflow(spec, null);
+    const jobs = result.content.jobs as any;
+    const actionStep = jobs.task.steps.find(
+      (s: any) => s.uses === "anthropics/claude-code-action@v1"
+    );
+    const args: string = actionStep.with.claude_args;
+    const readMatches = args.match(/--allowedTools 'Read'/g);
+    expect(readMatches).toHaveLength(1);
+    const grepMatches = args.match(/--allowedTools 'Grep'/g);
+    expect(grepMatches).toHaveLength(1);
+    // non-default tool still added
+    expect(args).toContain("--allowedTools 'Edit'");
   });
 
   test("passes system prompt via --append-system-prompt", () => {
@@ -62,7 +133,8 @@ describe("generateWorkflow", () => {
       (s: any) => s.uses === "anthropics/claude-code-action@v1"
     );
     expect(actionStep.with.prompt).toBe("Review this code");
-    expect(actionStep.with.claude_args).toBe("--append-system-prompt 'Be helpful.'");
+    expect(actionStep.with.claude_args).toContain("--append-system-prompt 'Be helpful.'");
+    expect(actionStep.with.claude_args).toContain("--allowedTools");
   });
 
   test("appends system prompt to existing claude_args", () => {
@@ -79,7 +151,9 @@ describe("generateWorkflow", () => {
     const actionStep = jobs.task.steps.find(
       (s: any) => s.uses === "anthropics/claude-code-action@v1"
     );
-    expect(actionStep.with.claude_args).toBe("--timeout 600 --append-system-prompt 'Be helpful.'");
+    expect(actionStep.with.claude_args).toContain("--timeout 600");
+    expect(actionStep.with.claude_args).toContain("--append-system-prompt 'Be helpful.'");
+    expect(actionStep.with.claude_args).toContain("--allowedTools");
   });
 
   test("includes pre and post action steps", () => {
@@ -136,7 +210,8 @@ describe("generateWorkflow", () => {
     const actionStep = jobs.task.steps.find(
       (s: any) => s.uses === "anthropics/claude-code-action@v1"
     );
-    expect(actionStep.with.claude_args).toBe("--timeout 600");
+    expect(actionStep.with.claude_args).toContain("--timeout 600");
+    expect(actionStep.with.claude_args).toContain("--allowedTools");
     expect(actionStep.with.plugins).toBe("my-plugin");
   });
 });

@@ -37,6 +37,22 @@ describe("ActionSchema", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  test("accepts allowed_tools as string array", () => {
+    const result = ActionSchema.safeParse({
+      prompt: "hello",
+      allowed_tools: ["Edit", "Write", "Bash(npm test*)"],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  test("rejects allowed_tools as non-array", () => {
+    const result = ActionSchema.safeParse({
+      prompt: "hello",
+      allowed_tools: "Edit",
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("GhaStepSchema", () => {

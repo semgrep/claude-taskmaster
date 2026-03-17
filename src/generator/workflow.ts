@@ -30,22 +30,74 @@ function stepToYaml(step: GhaStep): Record<string, unknown> {
 /**
  * Builds the claude-code-action step.
  */
+/**
+ * Default tools that are always allowed. These are all safe, non-mutating
+ * tools (no permission required) plus scoped Bash patterns for git/gh.
+ */
+const DEFAULT_ALLOWED_TOOLS = [
+  // File reading / search
+  "Read",
+  "Grep",
+  "Glob",
+  // Subagents & task management
+  "Agent",
+  "Skill",
+  "TaskCreate",
+  "TaskGet",
+  "TaskList",
+  "TaskOutput",
+  "TaskStop",
+  "TaskUpdate",
+  "TodoWrite",
+  // Worktree management
+  "EnterWorktree",
+  "ExitWorktree",
+  // Scheduling
+  "CronCreate",
+  "CronDelete",
+  "CronList",
+  // Tool discovery
+  "ToolSearch",
+  // Code intelligence
+  "LSP",
+  // MCP resources
+  "ListMcpResourcesTool",
+  "ReadMcpResourceTool",
+  // Plan mode
+  "EnterPlanMode",
+  "ExitPlanMode",
+  // Scoped Bash for git/gh
+  "Bash(git diff*)",
+  "Bash(git log*)",
+  "Bash(git show*)",
+  "Bash(gh pr *)",
+];
+
 function buildActionStep(
   prompt: string,
   systemPrompt: string | null,
   options: {
     claude_args?: string;
     plugins?: string;
+    allowed_tools?: string[];
     actionVersion: string;
   }
 ): Record<string, unknown> {
+  const allowedTools = [
+    ...new Set([...DEFAULT_ALLOWED_TOOLS, ...(options.allowed_tools || [])]),
+  ];
+
   const withBlock: Record<string, unknown> = {
     anthropic_api_key: "${{ secrets.ANTHROPIC_API_KEY }}",
-    use_sticky_comment: true,
+    github_token: "${{ secrets.GITHUB_TOKEN }}",
+    track_progress: true,
     prompt,
   };
 
-  let claudeArgs = options.claude_args || "";
+  const toolArgs = allowedTools.map((t) => `--allowedTools '${t}'`).join(" ");
+  let claudeArgs = options.claude_args
+    ? `${options.claude_args} ${toolArgs}`
+    : toolArgs;
 
   if (systemPrompt) {
     const escaped = systemPrompt.replace(/'/g, "'\\''");
@@ -98,6 +150,7 @@ export function generateWorkflow(
     buildActionStep(spec.spec.action.prompt, systemPrompt, {
       claude_args: spec.spec.action.claude_args,
       plugins: spec.spec.action.plugins,
+      allowed_tools: spec.spec.action.allowed_tools,
       actionVersion,
     })
   );

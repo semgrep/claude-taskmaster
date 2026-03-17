@@ -35,9 +35,8 @@ function stepToYaml(step: GhaStep): Record<string, unknown> {
 const LABELED_EVENT_COMMENT_SUFFIX =
   "\n\n${{ github.event.action == 'labeled' && format(" +
   "'Since this run was triggered by a label event, automatic progress tracking is disabled. " +
-  "After completing the task, you MUST post your full response as a PR comment. " +
-  "Write your response to /tmp/claude-response.md, then run: " +
-  "gh pr comment {0} --repo {1} --body-file /tmp/claude-response.md', " +
+  "After completing the task, you MUST post your full response as a PR comment using: " +
+  "gh pr comment {0} --repo {1} --body \"<your response>\"', " +
   "github.event.pull_request.number, github.repository) || '' }}";
 
 /**

@@ -69,7 +69,8 @@ describe("generateWorkflow", () => {
       "CronCreate", "CronDelete", "CronList",
       "ToolSearch", "LSP", "ListMcpResourcesTool", "ReadMcpResourceTool",
       "EnterPlanMode", "ExitPlanMode",
-      "Bash(git diff*)", "Bash(git log*)", "Bash(git show*)", "Bash(gh pr *)",
+      "Bash(git diff*)", "Bash(git log*)", "Bash(git show*)",
+      "Bash(gh pr view*)", "Bash(gh pr diff*)", "Bash(gh pr comment *)",
     ]) {
       expect(tools).toContain(tool);
     }

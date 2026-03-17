@@ -76,11 +76,14 @@ const DEFAULT_ALLOWED_TOOLS = [
   // Plan mode
   "EnterPlanMode",
   "ExitPlanMode",
-  // Scoped Bash for git/gh
+  // Scoped Bash for git (read-only)
   "Bash(git diff*)",
   "Bash(git log*)",
   "Bash(git show*)",
-  "Bash(gh pr *)",
+  // Scoped Bash for gh (read-only + repo-scoped comment)
+  "Bash(gh pr view*)",
+  "Bash(gh pr diff*)",
+  "Bash(gh pr comment *)",
 ];
 
 function buildActionStep(

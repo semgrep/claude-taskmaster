@@ -54,7 +54,9 @@ describe("CLI integration", () => {
     const actionStep = parsed.jobs.task.steps.find(
       (s: any) => s.uses === "anthropics/claude-code-action@v1"
     );
-    expect(actionStep.with.prompt).toBe("Review the code changes in this PR. Focus on bugs, security issues, and code quality.");
+    expect(actionStep.with.prompt).toContain("Review the code changes in this PR. Focus on bugs, security issues, and code quality.");
+    // Labeled event workaround suffix should be appended
+    expect(actionStep.with.prompt).toContain("github.event.action == 'labeled'");
     expect(actionStep.with.claude_args).toContain("--append-system-prompt");
     expect(actionStep.with.claude_args).toContain("helpful code review assistant");
   });

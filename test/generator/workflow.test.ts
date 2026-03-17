@@ -55,8 +55,11 @@ describe("generateWorkflow", () => {
     expect(actionStep.with.prompt).toBe("Review this code");
     expect(actionStep.with.github_token).toBe("${{ secrets.GITHUB_TOKEN }}");
     expect(actionStep.with.track_progress).toBe(true);
-    // default allowed tools passed via claude_args
+    // default allowed tools passed via a single --allowedTools flag (comma-separated)
     const args: string = actionStep.with.claude_args;
+    const match = args.match(/--allowedTools '([^']+)'/);
+    expect(match).toBeTruthy();
+    const tools = match![1].split(",");
     for (const tool of [
       "Read", "Grep", "Glob", "Agent", "Skill",
       "TaskCreate", "TaskGet", "TaskList", "TaskOutput", "TaskStop", "TaskUpdate",
@@ -64,13 +67,10 @@ describe("generateWorkflow", () => {
       "CronCreate", "CronDelete", "CronList",
       "ToolSearch", "LSP", "ListMcpResourcesTool", "ReadMcpResourceTool",
       "EnterPlanMode", "ExitPlanMode",
+      "Bash(git diff*)", "Bash(git log*)", "Bash(git show*)", "Bash(gh pr *)",
     ]) {
-      expect(args).toContain(`--allowedTools '${tool}'`);
+      expect(tools).toContain(tool);
     }
-    expect(args).toContain("--allowedTools 'Bash(git diff*)'");
-    expect(args).toContain("--allowedTools 'Bash(git log*)'");
-    expect(args).toContain("--allowedTools 'Bash(git show*)'");
-    expect(args).toContain("--allowedTools 'Bash(gh pr *)'");
   });
 
   test("merges user-specified allowed_tools with defaults", () => {
@@ -91,13 +91,16 @@ describe("generateWorkflow", () => {
       (s: any) => s.uses === "anthropics/claude-code-action@v1"
     );
     const args: string = actionStep.with.claude_args;
+    const match = args.match(/--allowedTools '([^']+)'/);
+    expect(match).toBeTruthy();
+    const tools = match![1].split(",");
     // defaults still present
-    expect(args).toContain("--allowedTools 'Read'");
-    expect(args).toContain("--allowedTools 'Agent'");
+    expect(tools).toContain("Read");
+    expect(tools).toContain("Agent");
     // user tools appended
-    expect(args).toContain("--allowedTools 'Edit'");
-    expect(args).toContain("--allowedTools 'Write'");
-    expect(args).toContain("--allowedTools 'Bash(npm test*)'");
+    expect(tools).toContain("Edit");
+    expect(tools).toContain("Write");
+    expect(tools).toContain("Bash(npm test*)");
   });
 
   test("deduplicates user-specified tools that overlap with defaults", () => {
@@ -118,12 +121,17 @@ describe("generateWorkflow", () => {
       (s: any) => s.uses === "anthropics/claude-code-action@v1"
     );
     const args: string = actionStep.with.claude_args;
-    const readMatches = args.match(/--allowedTools 'Read'/g);
-    expect(readMatches).toHaveLength(1);
-    const grepMatches = args.match(/--allowedTools 'Grep'/g);
-    expect(grepMatches).toHaveLength(1);
+    // should be a single --allowedTools flag
+    const flagMatches = args.match(/--allowedTools/g);
+    expect(flagMatches).toHaveLength(1);
+    const match = args.match(/--allowedTools '([^']+)'/);
+    expect(match).toBeTruthy();
+    const tools = match![1].split(",");
+    // duplicates removed
+    expect(tools.filter((t: string) => t === "Read")).toHaveLength(1);
+    expect(tools.filter((t: string) => t === "Grep")).toHaveLength(1);
     // non-default tool still added
-    expect(args).toContain("--allowedTools 'Edit'");
+    expect(tools).toContain("Edit");
   });
 
   test("passes system prompt via --append-system-prompt", () => {

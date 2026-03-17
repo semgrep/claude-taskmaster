@@ -94,7 +94,7 @@ function buildActionStep(
     prompt,
   };
 
-  const toolArgs = allowedTools.map((t) => `--allowedTools '${t}'`).join(" ");
+  const toolArgs = `--allowedTools '${allowedTools.join(",")}'`;
   let claudeArgs = options.claude_args
     ? `${options.claude_args} ${toolArgs}`
     : toolArgs;

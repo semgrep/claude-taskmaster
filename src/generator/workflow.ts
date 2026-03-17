@@ -28,8 +28,18 @@ function stepToYaml(step: GhaStep): Record<string, unknown> {
 }
 
 /**
- * Builds the claude-code-action step.
+ * Workaround for https://github.com/anthropics/claude-code-action/issues/944
+ * When track_progress is disabled (labeled events), claude-code-action does not
+ * post a PR comment automatically. This suffix instructs Claude to post one itself.
  */
+const LABELED_EVENT_COMMENT_SUFFIX =
+  "\n\n${{ github.event.action == 'labeled' && format(" +
+  "'Since this run was triggered by a label event, automatic progress tracking is disabled. " +
+  "After completing the task, you MUST post your full response as a PR comment. " +
+  "Write your response to /tmp/claude-response.md, then run: " +
+  "gh pr comment {0} --repo {1} --body-file /tmp/claude-response.md', " +
+  "github.event.pull_request.number, github.repository) || '' }}";
+
 /**
  * Default tools that are always allowed. These are all safe, non-mutating
  * tools (no permission required) plus scoped Bash patterns for git/gh.
@@ -90,8 +100,8 @@ function buildActionStep(
   const withBlock: Record<string, unknown> = {
     anthropic_api_key: "${{ secrets.ANTHROPIC_API_KEY }}",
     github_token: "${{ secrets.GITHUB_TOKEN }}",
-    track_progress: true,
-    prompt,
+    track_progress: "${{ github.event.action != 'labeled' }}",
+    prompt: prompt + LABELED_EVENT_COMMENT_SUFFIX,
   };
 
   const toolArgs = `--allowedTools '${allowedTools.join(",")}'`;

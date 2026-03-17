@@ -52,9 +52,11 @@ describe("generateWorkflow", () => {
       (s: any) => s.uses === "anthropics/claude-code-action@v1"
     );
     expect(actionStep).toBeTruthy();
-    expect(actionStep.with.prompt).toBe("Review this code");
+    expect(actionStep.with.prompt).toStartWith("Review this code");
+    expect(actionStep.with.prompt).toContain("gh pr comment");
+    expect(actionStep.with.prompt).toContain("github.event.action == 'labeled'");
     expect(actionStep.with.github_token).toBe("${{ secrets.GITHUB_TOKEN }}");
-    expect(actionStep.with.track_progress).toBe(true);
+    expect(actionStep.with.track_progress).toBe("${{ github.event.action != 'labeled' }}");
     // default allowed tools passed via a single --allowedTools flag (comma-separated)
     const args: string = actionStep.with.claude_args;
     const match = args.match(/--allowedTools '([^']+)'/);
@@ -140,7 +142,7 @@ describe("generateWorkflow", () => {
     const actionStep = jobs.task.steps.find(
       (s: any) => s.uses === "anthropics/claude-code-action@v1"
     );
-    expect(actionStep.with.prompt).toBe("Review this code");
+    expect(actionStep.with.prompt).toStartWith("Review this code");
     expect(actionStep.with.claude_args).toContain("--append-system-prompt 'Be helpful.'");
     expect(actionStep.with.claude_args).toContain("--allowedTools");
   });

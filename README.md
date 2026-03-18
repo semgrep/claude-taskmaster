@@ -114,6 +114,8 @@ bun run src/cli.ts <input-dir> <output-dir>
 bun run src/cli.ts .github/taskmaster .github/workflows
 
 # Pin claude-code-action version (default: v1)
+bun run src/cli.ts --action-version v2 .github/taskmaster .github/workflows
+# Or via env var
 TASKMASTER_ACTION_VERSION=v2 bun run src/cli.ts .github/taskmaster .github/workflows
 ```
 

@@ -8,16 +8,42 @@ import {
   writeWorkflowFile,
 } from "./generator";
 
-async function main() {
-  const args = process.argv.slice(2);
+function parseArgs(argv: string[]) {
+  const positional: string[] = [];
+  let actionVersion: string | undefined;
 
-  if (args.length < 2) {
-    console.error("Usage: taskmaster <input-dir> <output-dir>");
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === "--action-version") {
+      actionVersion = argv[++i];
+      if (!actionVersion) {
+        console.error("Error: --action-version requires a value");
+        process.exit(1);
+      }
+    } else if (argv[i].startsWith("--action-version=")) {
+      actionVersion = argv[i].split("=", 2)[1];
+    } else {
+      positional.push(argv[i]);
+    }
+  }
+
+  return { positional, actionVersion };
+}
+
+async function main() {
+  const { positional, actionVersion: flagVersion } = parseArgs(
+    process.argv.slice(2)
+  );
+
+  if (positional.length < 2) {
+    console.error(
+      "Usage: taskmaster [--action-version <version>] <input-dir> <output-dir>"
+    );
     process.exit(1);
   }
 
-  const [inputDir, outputDir] = args;
-  const actionVersion = process.env.TASKMASTER_ACTION_VERSION || "v1";
+  const [inputDir, outputDir] = positional;
+  const actionVersion =
+    flagVersion || process.env.TASKMASTER_ACTION_VERSION || "v1";
 
   // Read
   console.log(`Reading specs from ${inputDir}...`);

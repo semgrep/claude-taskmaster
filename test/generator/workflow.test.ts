@@ -54,6 +54,9 @@ describe("generateWorkflow", () => {
     expect(actionStep).toBeTruthy();
     expect(actionStep.with.prompt).toStartWith("Review this code");
     expect(actionStep.with.prompt).toContain("gh pr comment");
+    expect(actionStep.with.prompt).toContain("GitHub-flavored markdown");
+    expect(actionStep.with.prompt).toContain("$RUNNER_TEMP/claude-response.md");
+    expect(actionStep.with.prompt).toContain("--body-file");
     expect(actionStep.with.prompt).toContain("github.event.action == 'labeled'");
     expect(actionStep.with.github_token).toBe("${{ secrets.GITHUB_TOKEN }}");
     expect(actionStep.with.track_progress).toBe("${{ github.event.action != 'labeled' }}");
